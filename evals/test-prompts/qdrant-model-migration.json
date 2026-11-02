@@ -1,0 +1,56 @@
+{
+  "name": "qdrant-model-migration",
+  "product_area": "model migration",
+  "skill_url": "https://skills.qdrant.tech/qdrant-model-migration/SKILL.md",
+  "prompt": "We have a production collection with 180M vectors from OpenAI `text-embedding-ada-002` and want to move to `text-embedding-3-large` while keeping search online. The new vectors have different dimensions, and we'd like to A/B test quality before cutting over. What migration plan should we use?",
+  "rubric": [
+    {
+      "type": "must",
+      "text": "Confirms the model change requires full re-embedding into a NEW vector space (ada-002 1536-d and 3-large 3072-d are incompatible; old vectors can't be reused or mixed)"
+    },
+    {
+      "type": "must",
+      "text": "Supports the requested A/B test using either separate collections or separate named vectors, pairing each query embedding model with its matching collection or vector field to compare quality before committing"
+    },
+    {
+      "type": "must",
+      "text": "If recommending an in-place named-vector addition, checks that the server is v1.18+ and the collection already uses named vectors. A separate-collection migration satisfies this criterion without discussing the in-place alternative"
+    },
+    {
+      "type": "must",
+      "text": "Validates backfill completeness and retrieval quality before cutover; coordinates the query embedding model with using for an in-place migration, or with the collection/alias switch for a new collection"
+    },
+    {
+      "type": "must",
+      "text": "Enables writes of both embeddings before backfill and handles failed writes so incoming documents reach both vector spaces"
+    },
+    {
+      "type": "must",
+      "text": "Respects the inability to pause writes by requiring additional synchronization, such as ordered change replay with a cutover barrier or version/tombstone-aware reconciliation; explains that dual writes or insert_only alone do not prevent stale embeddings or deleted-point resurrection"
+    },
+    {
+      "type": "must",
+      "text": "Keeps old embeddings and dual writes through a rollback observation period, retiring them only after readers have switched and rollback is no longer required"
+    },
+    {
+      "type": "bonus",
+      "text": "Addresses bulk throughput using batched re-embedding; if suggesting a higher indexing_threshold, scopes it to a destination not serving queries, restores the original value, and waits for indexing before cutover"
+    },
+    {
+      "type": "bonus",
+      "text": "Explains that aliases redirect requests but do not copy payloads or choose a named vector"
+    },
+    {
+      "type": "avoid",
+      "text": "Recommends update_mode: insert, or uses insert_only to backfill a missing named vector on points that already exist"
+    },
+    {
+      "type": "avoid",
+      "text": "Suggests reusing or mixing the old ada-002 vectors with the new ones, or that re-embedding can be skipped here"
+    },
+    {
+      "type": "avoid",
+      "text": "Assumes a named vector can be added to an existing collection without checking server version (fails on v1.17 or earlier)"
+    }
+  ]
+}
